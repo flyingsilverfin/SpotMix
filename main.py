@@ -37,11 +37,15 @@ def track_json_to_vector(track_json):
     keys = ["danceability", "energy", "liveness", "acousticness", "valence", "instrumentalness", "speechiness"]
     vector = []
     for key in keys:
-        vector.append(track_json[key])
+        try:
+            vector.append(track_json[key])
+        except Exception as e:
+            print(e)
     return vector
 
 
 def vector_similarity(v1, v2, method="l2"):
+    v1, v2 = np.array(v1), np.array(v2)
     if method == "l2":
         return np.sum((v1-v2)**2)
     elif method == "l1":
@@ -90,10 +94,10 @@ def random_shuffle_strategy(p1_vectors, p2_vectors, num_p1, num_p2, attempts=100
     best_p1_indices, best_p2_indices = None, None
     for _ in range(attempts):
         p1_indices, p2_indices = _random_playlist_index_combinations(len(p1_vectors), len(p2_vectors), num_p1, num_p2)
-        p1_song_vectors = set([p1_vectors[index] for index in p1_indices])
-        p2_song_vectors = set([p2_vectors[index] for index in p2_indices])
+        p1_song_vectors = [p1_vectors[index] for index in p1_indices]
+        p2_song_vectors = [p2_vectors[index] for index in p2_indices]
 
-        score = score_playlist(p1_song_vectors.union(p2_song_vectors))
+        score = score_playlist(p1_song_vectors + p2_song_vectors)
         if score > best_score:
             best_p1_indices = p1_indices
             best_p2_indices = p2_indices
@@ -125,7 +129,7 @@ playlist_1 = [
     "4CKVB4pANABYlWTXtobGGF",
     "401XEI0EwcNqSrB1i79p30",
     "13GFvIqm2nPtIokVQ53fTs",
-    "4kSm2NqM7Xw397mZxOORds",
+    "2EFWnx5OAtpRSzLLTW8T57",
     "0xU5hglREQipGgY488h3aF",
     "1YdjpAX40I7SDJNUokG4V9",
     "4NVbnWdCbyFDeTfiI6Jo1G",
@@ -149,6 +153,7 @@ playlist_2 = [
 
 p1_json = [get_track(id).json() for id in playlist_1]
 p2_json = [get_track(id).json() for id in playlist_2]
-print(p1_json)
-print(p2_json)
-combine_playlists(p1_json, p2_json, target_size=5)
+combined = combine_playlists(p1_json, p2_json, target_size=5)
+
+
+print(combined)
