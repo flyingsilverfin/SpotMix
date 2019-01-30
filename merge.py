@@ -37,3 +37,24 @@ class RandomShuffleMerge():
                 best_score = score
     
         return best_p1_indices, best_p2_indices
+   
+class GreedyMerge():
+    
+    def __init__(self):
+        pass
+    
+    """ 
+    General idea:
+    * calculate all pairwise similarities between track in playlist A to playlist B
+    * Determine the order of picking, always starting with a0, b0 (in case we have an imbalanced number to pick from A and B)
+    * Pick a starting a0. Choose b0 as the most similar track to a0.
+    * Pick the next aK or bK as given by the order, choosing the best one by _total similarity to all prior chosen a0:K-1 or b0:K1_
+    * If desired: repeat process from all starting a0's, choose the best total set
+    """
+    
+"""
+other formulations:
+    * clustering based on original analysis vectors from spotify (how to enforce some from A and B are included?)
+    * one massive optimisation determining best tradeoff between number of A and B tracks as well as similarity 
+      (natural trade off here: K most similar tracks will likely stem from A or B entirely, forcing origin diversity vs similarity)
+"""
