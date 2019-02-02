@@ -3,8 +3,8 @@ import numpy as np
 
 class TrackAnalyser():
 
-    def __init__(self, auth_token, vector_keys=["danceability", "energy", "liveness", "acousticness", "valence", "instrumentalness", "speechiness"]):
-        self._token = auth_token
+    def __init__(self, auth, vector_keys=["danceability", "energy", "liveness", "acousticness", "valence", "instrumentalness", "speechiness"]):
+        self._auth = auth
         self._keys = vector_keys
 
     def _retrieve_analysis(self, track_id):
@@ -31,7 +31,7 @@ class TrackAnalyser():
         'key': 5}
         """
 
-        headers = {"Authorization": "Bearer {0}".format(self._token)}
+        headers = {"Authorization": "Bearer {0}".format(self._auth.token())}
         response = requests.get("https://api.spotify.com/v1/audio-features/{0}".format(id), headers=headers)
         json = response.json()
 

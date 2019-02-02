@@ -4,6 +4,7 @@ import itertools
 from comparator import VectorComparator
 from analyser import TrackAnalyser
 from merge import RandomShuffleMerge
+from auth import SpotifyAuth
 
 
 
@@ -71,7 +72,10 @@ playlist_2 = [
 ]
 
 
-token = open("token.txt").readlines()[0].strip()
-track_analyser = TrackAnalyser(token)
+APP_ID = "4660068b56c440b08777e8ee43dc4422"
+APP_SECRET = open("client_secret.txt").readlines()[0].strip()
+auth = SpotifyAuth(APP_ID, APP_SECRET)
+
+track_analyser = TrackAnalyser(auth)
 combined = combine_playlists(playlist_1, playlist_2, target_size=5)
 print(combined)
