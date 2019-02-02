@@ -32,9 +32,8 @@ class TrackAnalyser():
         """
 
         headers = {"Authorization": "Bearer {0}".format(self._auth.token())}
-        response = requests.get("https://api.spotify.com/v1/audio-features/{0}".format(id), headers=headers)
+        response = requests.get("https://api.spotify.com/v1/audio-features/{0}".format(track_id), headers=headers)
         json = response.json()
-
         # check if the response is not empty
         if 'danceability' not in json:
             raise Exception("No track analysis found for track ID: {0}".format(track_id))
