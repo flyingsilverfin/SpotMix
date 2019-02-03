@@ -2,4 +2,5 @@
 **/.*.swo
 client_secret.txt
 __pycache__
+.vscode
 
