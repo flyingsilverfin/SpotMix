@@ -1,42 +1,51 @@
 import numpy as np
 import itertools
 from comparator import VectorComparator
+from playlist import Playlist
 
-def score_playlist(playlist_vectors, comparator=VectorComparator.l2):
+def score_playlist(playlist, comparator=VectorComparator.l2):
     """ Compute all pairwise scores and sum to get playlist score """
     # TODO could be refined to score two separate playlist halves rather than a combined one
     total_score = 0.0
-    for (v1, v2) in itertools.combinations(playlist_vectors, 2):
-        total_score += comparator(v1, v2)
+    tracks = playlist.tracks()
+    for (t1, t2) in itertools.combinations(tracks, 2):
+        total_score += comparator(t1.vector(), t2.vector())
     return total_score
 
 class RandomShuffleMerge():
 
     @staticmethod
-    def _random_playlist_index_combinations(p1_size, p2_size, num_p1, num_p2):
-        p1_indices, p2_indices = np.arange(0, p1_size), np.arange(0, p2_size)
-        p1_index_choices = np.random.choice(p1_indices, num_p1, replace=False)
-        p2_index_choices = np.random.choice(p2_indices, num_p2, replace=False)
-        return p1_index_choices, p2_index_choices
+    def _random_playlist(p1, p2, num_p1, num_p2):
+        tracks_p1 = p1.tracks()
+        tracks_p2 = p2.tracks()
+
+        p1_indices, p2_indices = np.arange(0, p1.size()), np.arange(0, p2.size())
+        p1_subsample = np.random.choice(p1_indices, num_p1, replace=False)
+        p2_subsample = np.random.choice(p2_indices, num_p2, replace=True)
+
+        merged = Playlist()
+        for index in p1_subsample:
+            merged.add_track(tracks_p1[index])
+        for index in p2_subsample:
+            merged.add_track(tracks_p2[index])
+
+        return merged
+
 
     @staticmethod
-    def merge(p1_vectors, p2_vectors, num_p1, num_p2, trials=100):
+    def merge(p1, p2, num_p1, num_p2, trials=100):
         """ up to `attempts` times, randomly select subsets of p1 and p2 and score, return indices of best shuffle """
     
         best_score = 0.0
-        best_p1_indices, best_p2_indices = None, None
+        best_playlist = 0.0
         for _ in range(trials):
-            p1_indices, p2_indices = RandomShuffleMerge._random_playlist_index_combinations(len(p1_vectors), len(p2_vectors), num_p1, num_p2)
-            p1_song_vectors = [p1_vectors[index] for index in p1_indices]
-            p2_song_vectors = [p2_vectors[index] for index in p2_indices]
-    
-            score = score_playlist(p1_song_vectors + p2_song_vectors)
+            merged = RandomShuffleMerge._random_playlist(p1, p2, num_p1, num_p2)
+            score = score_playlist(merged)
             if score > best_score:
-                best_p1_indices = p1_indices
-                best_p2_indices = p2_indices
                 best_score = score
+                best_playlist = merged
     
-        return best_p1_indices, best_p2_indices
+        return best_playlist
    
 class GreedyMerge():
     
