@@ -13,9 +13,8 @@ def score_playlist(playlist, comparator=VectorComparator.l2):
     return total_score
 
 class RandomShuffleMerge():
-
-
-    def __init__(self, trials=100):
+    def __init__(self, comparator, trials=100):
+        self._comp = comparator
         self._trials = trials
 
     def _random_combined_playlist(self, p1, p2, num_p1, num_p2):
@@ -41,7 +40,7 @@ class RandomShuffleMerge():
         best_playlist = 0.0
         for _ in range(trials):
             merged = self._random_combined_playlist(p1, p2, num_p1, num_p2)
-            score = score_playlist(merged)
+            score = score_playlist(merged, comparator=self._comp)
             print("Possible playlist has scored: {0}".format(score))
             if score > best_score:
                 best_score = score
@@ -145,8 +144,9 @@ class Graph():
 
 class GreedyMerge():
     
-    def __init__(self):
-        pass
+    def __init__(self, comparator, compare_within_playlists=False):
+        self._comp = comparator
+        self._compare_intra_playlist = compare_within_playlists
 
     def merge(self, p1, p2, num_p1, num_p2):
 
@@ -161,19 +161,20 @@ class GreedyMerge():
         # add edge from all p1 to p2 tracks
         for p1_track in p1.tracks():
             for p2_track in p2.tracks():
-                similarity = VectorComparator.l2(p1_track.vector(), p2_track.vector())
+                similarity = self._comp(p1_track.vector(), p2_track.vector())
                 g.add_edge(p1_track.id(), p2_track.id(), weight=similarity)
 
-        # add all edges to each other too so we consider total playlist cohesiveness
-        p1_tracks = p1.tracks()
-        for (t1, t2) in itertools.combinations(p1_tracks, 2):
-            similarity = VectorComparator.l2(t1.vector(), t2.vector())
-            g.add_edge(t1.id(), t2.id(), weight=similarity)
-
-        p2_tracks = p2.tracks()
-        for (t1, t2) in itertools.combinations(p2_tracks, 2):
-            similarity = VectorComparator.l2(t1.vector(), t2.vector())
-            g.add_edge(t1.id(), t2.id(), weight=similarity)
+        if self._compare_intra_playlist:
+            # add all edges to each other too so we consider total playlist cohesiveness
+            p1_tracks = p1.tracks()
+            for (t1, t2) in itertools.combinations(p1_tracks, 2):
+                similarity = self._comp(t1.vector(), t2.vector())
+                g.add_edge(t1.id(), t2.id(), weight=similarity)
+    
+            p2_tracks = p2.tracks()
+            for (t1, t2) in itertools.combinations(p2_tracks, 2):
+                similarity = self._comp(t1.vector(), t2.vector())
+                g.add_edge(t1.id(), t2.id(), weight=similarity)
 
 
         # graph now has pairwise similarities
@@ -196,7 +197,6 @@ class GreedyMerge():
         print("Best playlist score: {0}".format(best_score))
 
         return self._graph_to_playlist(best_graph)
-
 
     def _rotate(self, l, n):
         return l[-n:] + l[:-n]
@@ -270,8 +270,6 @@ class GreedyMerge():
                 best_graph = subgraph
 
         return best_graph
-
-
 
     def _score_graph(self, graph):
         """ Compute total similarity score by summing all edge weights """
