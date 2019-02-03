@@ -21,14 +21,14 @@ def calculate_sample_sizes(size_a, size_b, target_size):
 
 
 
-def combine_playlists(p1, p2, analyser, target_size=10):
+def combine_playlists(p1, p2, analyser, method, target_size=10):
     p1.analyse(analyser)
     p2.analyse(analyser)
 
     p1_sample_num, p2_sample_num = calculate_sample_sizes(p1.size(), p2.size(), target_size)
 
     # merged_playlist = RandomShuffleMerge.merge(p1, p2, p1_sample_num, p2_sample_num)
-    merged_playlist = GreedyMerge.merge(p1, p2, p1_sample_num, p2_sample_num)
+    merged_playlist = method.merge(p1, p2, p1_sample_num, p2_sample_num)
 
     return merged_playlist
 
@@ -66,6 +66,13 @@ APP_ID = "4660068b56c440b08777e8ee43dc4422"
 APP_SECRET = open("client_secret.txt").readlines()[0].strip()
 auth = SpotifyAuth(APP_ID, APP_SECRET)
 
+print("--------------- Greedy Merge ---------------------")
 track_analyser = TrackAnalyser(auth)
-combined = combine_playlists(playlist_1, playlist_2, track_analyser, target_size=5)
+greedy_merger = GreedyMerge()
+combined = combine_playlists(playlist_1, playlist_2, track_analyser, method=greedy_merger, target_size=5)
 print(combined)
+
+# print("--------------- Random shuffle merge ----------------")
+# random_shuffle_merger = RandomShuffleMerge(trials=100)
+# combined = combine_playlists(playlist_1, playlist_2, track_analyser, method=random_shuffle_merger, target_size=5)
+# print(combined)

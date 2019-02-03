@@ -14,8 +14,11 @@ def score_playlist(playlist, comparator=VectorComparator.l2):
 
 class RandomShuffleMerge():
 
-    @staticmethod
-    def _random_playlist(p1, p2, num_p1, num_p2):
+
+    def __init__(self, trials=100):
+        self._trials = trials
+
+    def _random_combined_playlist(self, p1, p2, num_p1, num_p2):
         tracks_p1 = p1.tracks()
         tracks_p2 = p2.tracks()
 
@@ -31,19 +34,19 @@ class RandomShuffleMerge():
 
         return merged
 
-
-    @staticmethod
-    def merge(p1, p2, num_p1, num_p2, trials=100):
+    def merge(self, p1, p2, num_p1, num_p2, trials=100):
         """ up to `attempts` times, randomly select subsets of p1 and p2 and score, return indices of best shuffle """
     
         best_score = 0.0
         best_playlist = 0.0
         for _ in range(trials):
-            merged = RandomShuffleMerge._random_playlist(p1, p2, num_p1, num_p2)
+            merged = self._random_combined_playlist(p1, p2, num_p1, num_p2)
             score = score_playlist(merged)
+            print("Possible playlist has scored: {0}".format(score))
             if score > best_score:
                 best_score = score
                 best_playlist = merged
+        print("Best playlist has scored: {0}".format(best_score))
     
         return best_playlist
    
@@ -140,12 +143,12 @@ class Graph():
 
 
 
-
-
 class GreedyMerge():
     
-    @staticmethod
-    def merge(p1, p2, num_p1, num_p2):
+    def __init__(self):
+        pass
+
+    def merge(self, p1, p2, num_p1, num_p2):
 
         g = Graph()
         for track in p1.tracks():
@@ -161,47 +164,66 @@ class GreedyMerge():
                 similarity = VectorComparator.l2(p1_track.vector(), p2_track.vector())
                 g.add_edge(p1_track.id(), p2_track.id(), weight=similarity)
 
+        # add all edges to each other too so we consider total playlist cohesiveness
+        p1_tracks = p1.tracks()
+        for (t1, t2) in itertools.combinations(p1_tracks, 2):
+            similarity = VectorComparator.l2(t1.vector(), t2.vector())
+            g.add_edge(t1.id(), t2.id(), weight=similarity)
+
+        p2_tracks = p2.tracks()
+        for (t1, t2) in itertools.combinations(p2_tracks, 2):
+            similarity = VectorComparator.l2(t1.vector(), t2.vector())
+            g.add_edge(t1.id(), t2.id(), weight=similarity)
+
+
         # graph now has pairwise similarities
 
         merge_map = {
-            "p1" : num_p1,
-            "p2" : num_p2
+            "p2" : num_p1,
+            "p1" : num_p2
         }
-        merge_order = GreedyMerge._merge_order(merge_map)
-        print("Merging order: {0}".format(merge_order))
+        merge_orders = self._all_merge_orders(merge_map)
 
-        # have an order like [AAA, BB, AAA ...] to choose nodes in
+        best_graph, best_score = None, 0.0
+        for merge_order in merge_orders:
+            print("Merging order: {0}".format(merge_order))
+            greedy_subgraph = self._greedy_merge(g, merge_order)
+            score = self._score_graph(greedy_subgraph)
+            if score > best_score:
+                best_graph = greedy_subgraph
+                best_score = score
 
-        best_subgraph = GreedyMerge._greedy_merge(g, merge_order)
-        return GreedyMerge._graph_to_playlist(best_subgraph)
+        print("Best playlist score: {0}".format(best_score))
+
+        return self._graph_to_playlist(best_graph)
 
 
-    @staticmethod
-    def _merge_order(type_quantity_map):
-        types = list(type_quantity_map.keys())
-        
-        # pick one of each first
-        order = list(types)
+    def _rotate(self, l, n):
+        return l[-n:] + l[:-n]
 
-        for key in type_quantity_map:
-            type_quantity_map[key] -= 1
+    def _all_merge_orders(self, type_quantity_map):
+        all_orders = []
+        types = list(sorted(type_quantity_map.keys()))
+        min_quantity = min(list(type_quantity_map.values()))
+        required_length = sum(type_quantity_map.values())
 
-        quantities_per_type = np.array(list(type_quantity_map.values()))
-        min_quantity = np.min(quantities_per_type)
+        for rotation in range(len(type_quantity_map.keys())):
+            type_order = self._rotate(types, rotation)
+            # pick one of each first, but this order
+            order = type_order[:] 
+            copy = type_quantity_map.copy()
+            while len(order) < required_length:
+                for t in type_order:
+                    total_required = type_quantity_map[t]
+                    remaining_required = copy[t]
+                    generate = int(total_required/min_quantity)
+                    num_type = min(generate, remaining_required) 
+                    order += [t] * num_type
+                    copy[t] -= num_type
+            all_orders.append(order)
+        return all_orders
 
-        copy = type_quantity_map.copy()
-        for t in types:
-            total_required = type_quantity_map[t]
-            remaining_required = copy[t]
-            generate = int(total_required/min_quantity)
-            num_type = min(generate, remaining_required) 
-            order += [t] * num_type
-            copy[t] -= num_type
-
-        return order
-
-    @staticmethod
-    def _greedy_merge(graph, merge_order):
+    def _greedy_merge(self, graph, merge_order):
 
         first_node_type = merge_order[0]
         first_node_options = graph.get_nodes(node_type=first_node_type)
@@ -232,7 +254,7 @@ class GreedyMerge():
                         if sg.contains(end):
                             sg.add_edge(node, end, graph.edge_weight(node, end))
 
-                    score = GreedyMerge._score_graph(sg)
+                    score = self._score_graph(sg)
                     if score > best_next_subgraph_score:
                         best_next_subgraph_score = score
                         best_next_subgraph = sg
@@ -240,24 +262,22 @@ class GreedyMerge():
                 subgraph = best_next_subgraph
 
             # choose the best greedy subgraph chosen from each possible starting node
-            score = GreedyMerge._score_graph(subgraph)
-            print("Possible playlist has scored: {0}".format(score))
+            score = self._score_graph(subgraph)
+            print("Possible playlist has scored as graph/playlist: {0}".format(score))
+
             if score > best_score:
                 best_score = score
                 best_graph = subgraph
 
-        print("Best playlist has scored: {0}".format(best_score))
         return best_graph
 
 
 
-    @staticmethod
-    def _score_graph(graph):
+    def _score_graph(self, graph):
         """ Compute total similarity score by summing all edge weights """
         return np.sum(graph.edge_weights())
 
-    @staticmethod
-    def _graph_to_playlist(graph):
+    def _graph_to_playlist(self, graph):
         p = Playlist()
         for node in graph.nodes():
             track = graph.payload(node)
@@ -268,22 +288,7 @@ class GreedyMerge():
 
 
 
-
-        
-
-
-    
-
-
-    """ 
-    General idea:
-    * calculate all pairwise similarities between track in playlist A to playlist B
-    * Determine the order of picking, always starting with a0, b0 (in case we have an imbalanced number to pick from A and B)
-    * Pick a starting a0. Choose b0 as the most similar track to a0.
-    * Pick the next aK or bK as given by the order, choosing the best one by _total similarity to all prior chosen a0:K-1 or b0:K1_
-    * If desired: repeat process from all starting a0's, choose the best total set
-    """
-    
+       
 """
 other formulations:
     * clustering based on original analysis vectors from spotify (how to enforce some from A and B are included?)
