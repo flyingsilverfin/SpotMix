@@ -3,7 +3,7 @@ import itertools
 
 from comparator import VectorComparator
 from analyser import TrackAnalyser
-from merge import RandomShuffleMerge
+from merge import RandomShuffleMerge, GreedyMerge
 from auth import SpotifyAuth
 from playlist import Playlist
 
@@ -27,7 +27,8 @@ def combine_playlists(p1, p2, analyser, target_size=10):
 
     p1_sample_num, p2_sample_num = calculate_sample_sizes(p1.size(), p2.size(), target_size)
 
-    merged_playlist = RandomShuffleMerge.merge(p1, p2, p1_sample_num, p2_sample_num)
+    # merged_playlist = RandomShuffleMerge.merge(p1, p2, p1_sample_num, p2_sample_num)
+    merged_playlist = GreedyMerge.merge(p1, p2, p1_sample_num, p2_sample_num)
 
     return merged_playlist
 
