@@ -3,7 +3,7 @@ import time
 import base64
 
 class SpotifyAuth():
-    def __init__(self, client_id, client_secret):
+    def __init__(self,client_secret, client_id="4660068b56c440b08777e8ee43dc4422"):
         self._client_id = client_id
         self._client_secret = client_secret
 
