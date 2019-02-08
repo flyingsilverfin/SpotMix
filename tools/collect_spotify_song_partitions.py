@@ -2,24 +2,10 @@ import requests
 import time
 import json
 from auth import SpotifyAuth
+from spotify_search import search
 
 secret = open("client_secret.txt").readlines()[0].strip()
-
 auth = SpotifyAuth(client_secret=secret)
-
-
-def search(query, offset=0, limit=10, entity_type="track"):
-    headers = {
-            "Authorization": "Bearer {0}".format(auth.token()),
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-            }
-    response = requests.get("https://api.spotify.com/v1/search?q={0}&type={1}&limit={2}&offset={3}".format(query, entity_type, limit, offset), headers=headers)
-
-    if response.status_code != 200:
-        raise Exception(response.json())
-
-    return response.json()
 
 
 
@@ -27,9 +13,8 @@ def extract_track_count(search_response):
     return search_response["tracks"]["total"]
 
 
-
 def get_total_tracks_for_search_term(term):
-    response = search(query=term, limit=1)
+    response = search(query=term, token=auth.token(), limit=1)
     num_tracks = extract_track_count(response)
     return num_tracks
 
