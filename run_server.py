@@ -10,9 +10,15 @@ from spotipy_oauth2 import (
     SpotifyClientCredentials,
 )
 
+
+from analyser import TrackAnalyser
+from auth import SpotifyAuth
+from tools.random_spotify_song import get_random_track_with_analysis
+
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 routes = web.RouteTableDef()
 
@@ -73,6 +79,47 @@ async def ping(request):
     return web.json_response({
         'playlists': playlists
     })
+
+
+
+
+
+
+# ---- josh's shit code section that needs help AHHH ----
+
+secret = open("client_secret.txt").readlines()[0].strip()
+auth = SpotifyAuth(secret)
+analyser = TrackAnalyser(auth)
+
+@routes.get("/similarity")
+async def get_rate_track_similarity(request):
+    
+    try:
+        print("Got request")
+        id1 = request.rel_url.query['id1']
+        id2 = request.rel_url.query['id1']
+        rating = request.rel_url.query['Similarity']
+        # logger.info("LOG {0}, {1}: {2}".format(id1, id2, rating))
+        print("{0}, {1}: {2}".format(id1, id2, rating))
+    except Exception as e:
+        print(e.message)
+
+    template = open("tools/rate_similarity.html").readlines()
+
+    random_id_1, _ = get_random_track_with_analysis(analyser, auth)
+    random_id_2, _ = get_random_track_with_analysis(analyser, auth)
+
+    # find and replace id 1
+    template = [line.replace("REPLACE_ME_1", random_id_1) for line in template]
+    template = [line.replace("REPLACE_ME_2", random_id_2) for line in template]
+
+    resp = web.Response(body="\n".join(template).encode('utf-8'), content_type='text/html')
+    resp.headers['content-type'] = 'text/html'
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate" # HTTP 1.1.
+    resp.headers["Pragma"] = "no-cache" # HTTP 1.0.
+    resp.headers["Expires"] = "0" # Proxies.
+    return resp 
+
 
 if __name__ == "__main__":
     logger.info("Starting SpotMix!")

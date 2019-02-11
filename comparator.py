@@ -13,4 +13,8 @@ class VectorComparator():
     def l2(v1, v2):
         v1, v2 = np.array(v1), np.array(v2)
         return np.sum((v1-v2)**2)
-        
+
+    @staticmethod
+    def cos(v1, v2):
+        v1, v2 = np.array(v1), np.array(v2)
+        return np.dot(v1, v2)/(np.linalg.norm(v1) * np.linalg.norm(v2))

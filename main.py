@@ -106,11 +106,11 @@ human_match_suggestion = [
 
 APP_ID = "4660068b56c440b08777e8ee43dc4422"
 APP_SECRET = open("client_secret.txt").readlines()[0].strip()
-auth = SpotifyAuth(APP_ID, APP_SECRET)
+auth = SpotifyAuth(client_id=APP_ID, client_secret=APP_SECRET)
 
 print("--------------- Greedy Merge ---------------------")
 track_analyser = TrackAnalyser(auth)
-greedy_merger = GreedyMerge(comparator=VectorComparator.l1)
+greedy_merger = GreedyMerge(comparator=VectorComparator.cos)
 combined = combine_playlists(playlist_easy_1, playlist_easy_2, track_analyser, method=greedy_merger, target_size=20)
 print(combined)
 
