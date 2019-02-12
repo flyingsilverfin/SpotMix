@@ -14,6 +14,7 @@ from spotipy_oauth2 import (
 from analyser import TrackAnalyser
 from auth import SpotifyAuth
 from tools.random_spotify_song import get_random_track_with_analysis
+from tools.training_data_db import TrackSimilarityDb
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -90,19 +91,17 @@ async def ping(request):
 secret = open("client_secret.txt").readlines()[0].strip()
 auth = SpotifyAuth(secret)
 analyser = TrackAnalyser(auth)
+db = TrackSimilarityDb("tools/data/track_similarities.db")
 
 @routes.get("/similarity")
 async def get_rate_track_similarity(request):
     
-    try:
+    if 'id1' in request.rel_url.query:
         print("Got request")
         id1 = request.rel_url.query['id1']
         id2 = request.rel_url.query['id1']
         rating = request.rel_url.query['Similarity']
-        # logger.info("LOG {0}, {1}: {2}".format(id1, id2, rating))
-        print("{0}, {1}: {2}".format(id1, id2, rating))
-    except Exception as e:
-        print(e.message)
+        db.add(id1, id2, int(rating))
 
     template = open("tools/rate_similarity.html").readlines()
 

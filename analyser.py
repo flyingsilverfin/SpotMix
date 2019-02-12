@@ -3,9 +3,11 @@ import numpy as np
 
 class TrackAnalyser():
 
-    def __init__(self, auth, vector_keys=["danceability", "energy", "liveness", "acousticness", "valence", "instrumentalness", "speechiness"]):
+    # def __init__(self, auth, vector_keys=["danceability", "energy", "liveness", "acousticness", "valence", "instrumentalness", "speechiness", "mode", "tempo"], vector_normalization=[1, 1, 1, 1, 1, 1,1, 1, 100.0]):
+    def __init__(self, auth, vector_keys=["danceability", "energy", "liveness", "acousticness", "valence", "instrumentalness", "speechiness"], vector_normalization=[1, 1, 1, 1, 1, 1,1]):
         self._auth = auth
         self._keys = vector_keys
+        self._normalizers = vector_normalization
 
     def _retrieve_analysis(self, track_id):
         """
@@ -44,7 +46,7 @@ class TrackAnalyser():
         json_analysis = self._retrieve_analysis(track_id)
 
         vector = []
-        for key in self._keys:
-            vector.append(json_analysis[key])
+        for i, key in enumerate(self._keys):
+            vector.append(json_analysis[key]/self._normalizers[i])
 
         return np.array(vector)
