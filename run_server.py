@@ -4,6 +4,7 @@ import uvloop
 import aiohttp_cors
 import spotipy
 
+import aiohttp
 from aiohttp import web
 from spotipy_oauth2 import (
     SpotifyOAuth,
@@ -95,14 +96,6 @@ db = TrackSimilarityDb("tools/data/track_similarities.db")
 
 @routes.get("/similarity")
 async def get_rate_track_similarity(request):
-    
-    if 'id1' in request.rel_url.query:
-        print("Got request")
-        id1 = request.rel_url.query['id1']
-        id2 = request.rel_url.query['id1']
-        rating = request.rel_url.query['Similarity']
-        db.add(id1, id2, int(rating))
-
     template = open("tools/rate_similarity.html").readlines()
 
     random_id_1, _ = get_random_track_with_analysis(analyser, auth)
@@ -118,6 +111,22 @@ async def get_rate_track_similarity(request):
     resp.headers["Pragma"] = "no-cache" # HTTP 1.0.
     resp.headers["Expires"] = "0" # Proxies.
     return resp 
+
+
+@routes.post("/similarity")
+async def receive_rating(request):
+    data = await request.post()
+    try:
+        id1 = data['id1']
+        id2 = data['id1']
+        rating = data['similarity']
+        db.add(id1, id2, int(rating))
+    except Exception as e:
+        print(e)
+
+    return aiohttp.web.HTTPFound('/similarity')
+
+
 
 
 if __name__ == "__main__":
