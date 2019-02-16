@@ -19,6 +19,7 @@ class TrackSimilarityDb():
         if similarity < 0 or similarity > 9:
             raise SimilarityBoundsException("Similarity must be between 0 and 9 inclusive")
         self._conn.execute("INSERT INTO track_similarity VALUES (?, ?, ?)", [track_id_1, track_id_2, similarity])
+        self._conn.commit()
 
     def get_all_similarities(self):
         c = self._conn.cursor()

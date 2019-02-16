@@ -11,6 +11,7 @@ from spotipy_oauth2 import (
     SpotifyClientCredentials,
 )
 
+port=8080
 
 from analyser import TrackAnalyser
 from auth import SpotifyAuth
@@ -37,7 +38,7 @@ async def geturl(request):
     sp = SpotifyOAuth(
         client_id='',
         client_secret='',
-        redirect_uri='http://localhost:8080/callback'
+        redirect_uri='http://localhost:{}/callback'.format(port)
     )
     url_to_show = sp.get_authorize_url(
         state="blah_blah",
@@ -55,7 +56,7 @@ async def ping(request):
     sp = SpotifyOAuth(
         client_id='',
         client_secret='',
-        redirect_uri='http://localhost:8080/callback'
+        redirect_uri='http://localhost:{}/callback'.format(port)
     )
 
     token_info = sp.get_access_token(token_from_spotify)
@@ -113,16 +114,18 @@ async def get_rate_track_similarity(request):
     return resp 
 
 
-@routes.post("/similarity")
+@routes.post("/submit_similarity")
 async def receive_rating(request):
     data = await request.post()
+    print(data)
     try:
         id1 = data['id1']
         id2 = data['id1']
         rating = data['similarity']
+        print("Adding {0}, {1} - {2}".format(id1, id2, rating))
         db.add(id1, id2, int(rating))
     except Exception as e:
-        print(e)
+        print("Exception!, {0}".format(e))
 
     return aiohttp.web.HTTPFound('/similarity')
 
@@ -143,4 +146,4 @@ if __name__ == "__main__":
         )
     })
     cors.add(app.router.add_resource("/geturl"))
-    web.run_app(app)
+    web.run_app(app, port=port)
