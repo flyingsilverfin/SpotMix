@@ -3,6 +3,7 @@ import logging
 import uvloop
 import aiohttp_cors
 import spotipy
+import ssl
 
 import aiohttp
 from aiohttp import web
@@ -19,6 +20,12 @@ from tools.random_spotify_song import get_random_track_with_analysis
 from tools.training_data_db import TrackSimilarityDb
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
+if port == 443:
+    sslcontext = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+    certbase = "/etc/letsencrypt/live/www.mixit.app"
+    sslcontext.load_cert_chain(certbase + "/fullchain.pem", certbase + "/privkey.pem")
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -146,4 +153,7 @@ if __name__ == "__main__":
         )
     })
     cors.add(app.router.add_resource("/geturl"))
-    web.run_app(app, port=port)
+    if port == 443:
+        web.run_app(app, ssl_context=sslcontext, port=port)
+    else:
+        web.run_app(app, port=port)
