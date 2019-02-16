@@ -12,12 +12,19 @@ from spotipy_oauth2 import (
     SpotifyClientCredentials,
 )
 
-port=8080
+import argparse
+
+
 
 from analyser import TrackAnalyser
 from auth import SpotifyAuth
 from tools.random_spotify_song import get_random_track_with_analysis
 from tools.training_data_db import TrackSimilarityDb
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-p', "--port", type=str, help="webserver port (443 uses ssl)", default=8080)
+args = parser.parse_args()
+port = args.port
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
