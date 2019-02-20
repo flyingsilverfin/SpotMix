@@ -1,5 +1,59 @@
 <html>
     <head>
+        <link rel="icon" href="thumb.png" type="image/x-icon">
+
+<style>
+
+#rating-form {
+    display:inline-block;
+    margin-top: 20px
+}
+
+#submit-button {
+    width:100%;
+}
+
+#similarity-labels {
+    width:100%;
+    position: relative;
+    height: 1em;
+}
+
+#label-least-similar {
+    position:absolute;
+    left: 3px;
+    display:inline-block;
+}
+
+#label-most-similar {
+    position:absolute;
+    right: 3px;
+    display:inline-block;
+}
+
+label {
+    display: inline-block;
+    padding: 10px 30px;
+    background-color: #DDD;
+    margin-top: 10px;
+}
+
+input[type="radio"] {
+    display: none;
+}
+
+input[type="radio"]:checked + label {
+    background-color: #0A0;
+}
+
+input[type="submit"] {
+    background-color: #DDD;
+    border: none;
+    margin-top: 10px;
+    padding: 10px 10px;
+}
+
+</style>
     </head>
     <body>
 
@@ -8,12 +62,48 @@
         <iframe src="https://open.spotify.com/embed/track/REPLACE_ME_2" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 
 
-        <form action="/submit_similarity" method="post" target="_self"> 
-               <input type="range" name="similarity" min="1" max="10"/>
-               <input type="hidden" name="id1" value="REPLACE_ME_1" /> 
-               <input type="hidden" name="id2" value="REPLACE_ME_2" />
+        <div>
+        <form id="rating-form" action="/submit_similarity" method="post" target="_self"> 
+            <div id="similarity-labels">
+                <div id="label-least-similar"> Not similar......</div>
+                <div id="label-most-similar"> ......Very similar </div>
+            </div>
+            <div id="form-container-inner">
+                <input type="hidden" name="id1" value="REPLACE_ME_1" /> 
+                <input type="hidden" name="id2" value="REPLACE_ME_2" />
+    
+    
+                <div id="radio-container">
+                    <input type="radio" id="sim1" name="similarity">
+                    <label for="sim1">1</label>
+                    <input type="radio" id="sim2" name="similarity">
+                    <label for="sim2">2</label>
+    
+                    <input type="radio" id="sim3" name="similarity">
+                    <label for="sim3">3</label>
+                    <input type="radio" id="sim4" name="similarity">
+                    <label for="sim4">4</label>
+    
+                    <input type="radio" id="sim5" name="similarity">
+                    <label for="sim5">5</label>
+                    <input type="radio" id="sim6" name="similarity">
+                    <label for="sim6">6</label>
+    
+                    <input type="radio" id="sim7" name="similarity">
+                    <label for="sim7">7</label>
+                    <input type="radio" id="sim8" name="similarity">
+                    <label for="sim8">8</label>
+    
+                    <input type="radio" id="sim9" name="similarity">
+                    <label for="sim9">9</label>
+                    <input type="radio" id="sim10" name="similarity">
+                    <label for="sim10">10</label>
+                </div>
 
-               <input type="submit" value="Submit"/>
+                <input id="submit-button" type="submit" value="Submit"/>
+            </div>
+
          </form> 
+        </div>
     </body>
 </html>
