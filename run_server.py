@@ -140,13 +140,14 @@ def sleep_apply(t, func):
     time.sleep(t)
     func()
     
-refill_track_id_buffer()
 refill_thread = threading.Thread(target=refill_track_id_buffer) 
+refill_thread.start()
+
 
 @routes.get("/similarity")
 async def get_rate_track_similarity(request):
     global refill_thread
-    template = open("tools/rate_similarity.html").readlines()
+    template = open("html/rate_similarity.html").readlines()
 
     random_id_1 = pop_track_id()
     random_id_2 = pop_track_id()
@@ -186,12 +187,13 @@ async def receive_rating(request):
 
 
 
-
 if __name__ == "__main__":
     logger.info("Starting SpotMix!")
 
     app = web.Application()
     app.add_routes(routes)
+
+    app.router.add_static('/res', "html/res")
 
     cors = aiohttp_cors.setup(app, defaults={
         "*": aiohttp_cors.ResourceOptions(
