@@ -118,12 +118,17 @@ min_buffered_track_popularity = 3
 
 def next_valid_track_id():
     while True:
-        track_id, _ = get_random_track_with_analysis(analyser, auth)
-        print(track_id)
-        track_popularity = int(get_track(track_id, auth.token())["popularity"])
-        if track_popularity >= min_buffered_track_popularity:
-            print("{0} - popularity: {1}".format(track_id, track_popularity))
-            return track_id
+        try:
+            time.sleep(0.05)
+            track_id, _ = get_random_track_with_analysis(analyser, auth)
+            print(track_id)
+            track_popularity = int(get_track(track_id, auth.token())["popularity"])
+            if track_popularity >= min_buffered_track_popularity:
+                print("{0} - popularity: {1}".format(track_id, track_popularity))
+                return track_id
+        except Exception:
+            time.sleep(0.1)
+            # probably hit the rate limit
 
 def refill_track_id_buffer():
     print("refilling buffer")
