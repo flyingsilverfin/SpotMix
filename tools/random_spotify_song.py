@@ -1,7 +1,7 @@
 import numpy as np
 import json
 from auth import SpotifyAuth
-from spotify_search import search
+from spotify_search import search, get_track
 from analyser import TrackAnalyser
 
 
@@ -36,6 +36,11 @@ def get_random_track_with_analysis(analyser, auth):
         except Exception as e:
             print(e)
             continue
+
+def get_popularity(auth, track_id):
+    track_data = get_track(track_id, auth.token())
+    popularity = int(track_data["popularity"])
+    return popularity
         
 if __name__ == "__main__":
     secret = open("client_secret.txt").readlines()[0].strip()
