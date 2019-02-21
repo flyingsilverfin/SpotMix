@@ -16,8 +16,8 @@ from spotipy_oauth2 import (
 import argparse
 
 
-
 import threading
+import time
 from analyser import TrackAnalyser
 from auth import SpotifyAuth
 from spotify_search import get_track
@@ -113,37 +113,43 @@ analyser = TrackAnalyser(auth)
 db = TrackSimilarityDb("tools/data/track_similarities.db")
 track_buffer_limit = 200
 track_id_buffer = []
-min_buffered_track_popularity = 5
+min_buffered_track_popularity = 3
+
 
 def next_valid_track_id():
     while True:
-        track_id = get_random_track_with_analysis(analyser, auth)
+        track_id, _ = get_random_track_with_analysis(analyser, auth)
+        print(track_id)
         track_popularity = int(get_track(track_id, auth.token())["popularity"])
         if track_popularity >= min_buffered_track_popularity:
             print("{0} - popularity: {1}".format(track_id, track_popularity))
             return track_id
 
 def refill_track_id_buffer():
+    print("refilling buffer")
     while len(track_id_buffer) < track_buffer_limit:
-        track_id_buffer.append(next_track_id)
+        track_id_buffer.append(next_valid_track_id())
 
-def next_track_id():
+def pop_track_id():
     if len(track_id_buffer) < 2:
         return next_valid_track_id()
     else:
         return track_id_buffer.pop(0)
 
-def sleep_apply(time, func):
-    time.sleep(time)
+def sleep_apply(t, func):
+    time.sleep(t)
     func()
     
+refill_track_id_buffer()
+refill_thread = threading.Thread(target=refill_track_id_buffer) 
 
 @routes.get("/similarity")
 async def get_rate_track_similarity(request):
+    global refill_thread
     template = open("tools/rate_similarity.html").readlines()
 
-    random_id_1, _ = next_track_id()
-    random_id_2, _ = next_track_id()
+    random_id_1 = pop_track_id()
+    random_id_2 = pop_track_id()
 
     # find and replace id 1
     template = [line.replace("REPLACE_ME_1", random_id_1) for line in template]
@@ -156,8 +162,9 @@ async def get_rate_track_similarity(request):
     resp.headers["Expires"] = "0" # Proxies.
 
     # trigger a separate thread to run the refill buffer after a short delay
-    if len(track_id_buffer) < track_buffer_limit/2:
-        threading.Thread(target=sleep_apply, args=(0.1, refill_track_id_buffer))
+    if len(track_id_buffer) < track_buffer_limit/2 and not refill_thread.is_alive():
+        refill_thread = threading.Thread(target=sleep_apply, args=(0.1, refill_track_id_buffer))
+        refill_thread.start()
 
     return resp 
 
